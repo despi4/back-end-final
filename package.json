@@ -1,17 +1,23 @@
 {
   "name": "back-end-final",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Blog API with JWT auth, RBAC, MongoDB and Bootstrap pages",
+  "type": "module",
+  "main": "src/server.js",
   "scripts": {
-  "dev": "nodemon src/server.js",
-  "start": "node src/server.js"
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/despi4/back-end-final.git"
   },
-  "keywords": [],
+  "keywords": [
+    "express",
+    "mongodb",
+    "jwt",
+    "blog"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {

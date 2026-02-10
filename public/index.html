@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog API - Home</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+      integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="/">Blog API</a>
+      <div class="ml-auto">
+        <a class="btn btn-outline-light btn-sm mr-2" href="/login.html">Login</a>
+        <a class="btn btn-primary btn-sm" href="/register.html">Register</a>
+      </div>
+    </nav>
+
+    <main class="container py-5">
+      <div class="jumbotron">
+        <h1 class="display-4">Node + Express Blog</h1>
+        <p class="lead">
+          JWT authentication, RBAC, MongoDB collections, validation and Bootstrap pages.
+        </p>
+        <hr class="my-4" />
+        <p>Use this UI for quick manual checks of register/login/profile/posts APIs.</p>
+        <a class="btn btn-primary btn-lg mr-2" href="/register.html">Create Account</a>
+        <a class="btn btn-outline-secondary btn-lg" href="/dashboard.html">Open Dashboard</a>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">API Base</h5>
+          <p class="card-text mb-0"><code id="api-base"></code></p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document.getElementById("api-base").textContent = window.location.origin;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+      integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="/">Blog API</a>
+      <div class="ml-auto">
+        <a class="btn btn-outline-light btn-sm mr-2" href="/dashboard.html">Dashboard</a>
+        <button id="logoutBtn" class="btn btn-danger btn-sm">Logout</button>
+      </div>
+    </nav>
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-4">Profile</h3>
+              <div id="alert" class="alert d-none" role="alert"></div>
+              <form id="profileForm">
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input id="username" name="username" class="form-control" required minlength="3" />
+                </div>
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label for="role">Role</label>
+                  <input id="role" name="role" class="form-control" disabled />
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "/login.html";
+      }
+
+      const alertBox = document.getElementById("alert");
+      const form = document.getElementById("profileForm");
+
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login.html";
+      });
+
+      function showMessage(message, type = "danger") {
+        alertBox.className = `alert alert-${type}`;
+        alertBox.textContent = message;
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            ...(options.headers || {}),
+          },
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.message || "Request failed");
+        }
+
+        return data;
+      }
+
+      async function loadProfile() {
+        try {
+          const profile = await api("/users/profile");
+          form.username.value = profile.username || "";
+          form.email.value = profile.email || "";
+          form.role.value = profile.role || "user";
+        } catch (error) {
+          showMessage(error.message, "danger");
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const payload = {
+          username: form.username.value.trim(),
+          email: form.email.value.trim(),
+        };
+
+        try {
+          await api("/users/profile", {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+          showMessage("Profile updated", "success");
+        } catch (error) {
+          showMessage(error.message, "danger");
+        }
+      });
+
+      loadProfile();
+    </script>
+  </body>
+</html>
