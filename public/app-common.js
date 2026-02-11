@@ -38,6 +38,86 @@
     return response.json().catch(() => ({}));
   }
 
+  function readDetailPath(path) {
+    if (Array.isArray(path) && path.length) {
+      return path.map((item) => String(item)).join(".");
+    }
+
+    if (typeof path === "string" && path.trim()) {
+      return path.trim();
+    }
+
+    return "";
+  }
+
+  function detailToMessage(detail) {
+    if (typeof detail === "string" && detail.trim()) {
+      return detail.trim();
+    }
+
+    if (!detail || typeof detail !== "object") {
+      return "";
+    }
+
+    const message = typeof detail.message === "string" ? detail.message.trim() : "";
+    const path = readDetailPath(detail.path);
+
+    if (message && path) {
+      return `${path}: ${message}`;
+    }
+
+    return message || path;
+  }
+
+  function collectDetailMessages(data) {
+    const messages = [];
+
+    if (Array.isArray(data.details)) {
+      for (const detail of data.details) {
+        const line = detailToMessage(detail);
+        if (line) {
+          messages.push(line);
+        }
+      }
+    } else if (typeof data.details === "string" && data.details.trim()) {
+      messages.push(data.details.trim());
+    } else if (data.details && typeof data.details === "object") {
+      for (const [key, value] of Object.entries(data.details)) {
+        if (value === undefined || value === null) {
+          continue;
+        }
+        messages.push(`${key}: ${String(value)}`);
+      }
+    }
+
+    if (Array.isArray(data.errors)) {
+      for (const detail of data.errors) {
+        const line = detailToMessage(detail);
+        if (line) {
+          messages.push(line);
+        }
+      }
+    }
+
+    return [...new Set(messages)];
+  }
+
+  function formatApiErrorMessage(data, status) {
+    const fallback = `Request failed (${status})`;
+    if (!data || typeof data !== "object") {
+      return fallback;
+    }
+
+    const base = typeof data.message === "string" && data.message.trim() ? data.message.trim() : fallback;
+    const details = collectDetailMessages(data);
+
+    if (!details.length) {
+      return base;
+    }
+
+    return `${base}\n${details.map((line) => `- ${line}`).join("\n")}`;
+  }
+
   function createApiClient(token) {
     async function request(path, options) {
       const settings = options || {};
@@ -71,7 +151,7 @@
       const data = await parseJsonSafe(response);
 
       if (!response.ok) {
-        const error = new Error(data.message || `Request failed (${response.status})`);
+        const error = new Error(formatApiErrorMessage(data, response.status));
         error.status = response.status;
         error.payload = data;
         throw error;
