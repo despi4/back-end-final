@@ -1,5 +1,6 @@
 import { Comment } from "../models/Comment.js";
 import { Post } from "../models/Post.js";
+import { can, PERMISSIONS } from "../rbac/permissions.js";
 
 function canAccessPost(user, post) {
   if (post.isPublished) {
@@ -10,11 +11,11 @@ function canAccessPost(user, post) {
     return false;
   }
 
-  if (user.role === "admin") {
+  if (can(user.role, PERMISSIONS.POST_READ_ANY)) {
     return true;
   }
 
-  return post.author.toString() === user._id.toString();
+  return can(user.role, PERMISSIONS.POST_READ_OWN) && post.author.toString() === user._id.toString();
 }
 
 export async function createComment(req, res, next) {
@@ -74,10 +75,11 @@ export async function deleteComment(req, res, next) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    const isAdmin = req.user.role === "admin";
+    const canDeleteAny = can(req.user.role, PERMISSIONS.COMMENT_DELETE_ANY);
+    const canDeleteOwn = can(req.user.role, PERMISSIONS.COMMENT_DELETE_OWN);
     const isOwner = comment.author.toString() === req.user._id.toString();
 
-    if (!isAdmin && !isOwner) {
+    if (!canDeleteAny && !(canDeleteOwn && isOwner)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 

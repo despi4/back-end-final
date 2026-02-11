@@ -1,14 +1,18 @@
 import { User } from "../models/User.js";
 
+function toUserPayload(user) {
+  return {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
 export async function getProfile(req, res) {
-  return res.json({
-    id: req.user._id,
-    username: req.user.username,
-    email: req.user.email,
-    role: req.user.role,
-    createdAt: req.user.createdAt,
-    updatedAt: req.user.updatedAt,
-  });
+  return res.json(toUserPayload(req.user));
 }
 
 export async function updateProfile(req, res, next) {
@@ -36,14 +40,42 @@ export async function updateProfile(req, res, next) {
 
     await req.user.save();
 
-    return res.json({
-      id: req.user._id,
-      username: req.user.username,
-      email: req.user.email,
-      role: req.user.role,
-      createdAt: req.user.createdAt,
-      updatedAt: req.user.updatedAt,
-    });
+    return res.json(toUserPayload(req.user));
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function listUsers(req, res, next) {
+  try {
+    const users = await User.find()
+      .select("_id username email role createdAt updatedAt")
+      .sort({ createdAt: -1 });
+
+    return res.json(users.map((user) => toUserPayload(user)));
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function updateUserRole(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (id === req.user._id.toString()) {
+      return res.status(400).json({ message: "You cannot change your own role" });
+    }
+
+    const user = await User.findById(id).select("_id username email role createdAt updatedAt");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.role = role;
+    await user.save();
+
+    return res.json(toUserPayload(user));
   } catch (error) {
     return next(error);
   }

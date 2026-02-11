@@ -18,7 +18,7 @@ Backend final project with JWT authentication, RBAC, Joi validation, global erro
 - MongoDB: yes
 - 5 collections: `users`, `posts`, `comments`, `categories`, `postcategories`
 - JWT auth: yes
-- RBAC (`user`, `admin`): yes
+- RBAC (`user`, `moderator`, `admin`) with permission matrix: yes
 - Validation (Joi): yes
 - Global error middleware: yes
 - Bootstrap 4+ pages: yes (`index`, `login`, `register`, `dashboard`, `profile`)
@@ -54,19 +54,28 @@ back-end-final/
       validate.js
       errorMiddleware.js
       notFound.js
+    rbac/
+      roles.js
+      permissions.js
+    scripts/
+      promoteUserRole.js
     validators/
       authValidators.js
       userValidators.js
       postValidators.js
       categoryValidators.js
     app.js
+    frontServer.js
     server.js
   public/
+    app-common.js
+    app-config.js
     index.html
     login.html
     register.html
     profile.html
     dashboard.html
+    styles.css
   README.md
   package.json
 ```
@@ -83,33 +92,73 @@ npm install
 
 ```env
 PORT=3000
+FRONT_PORT=5173
 MONGO_URI=mongodb://127.0.0.1:27017/blog_api
 JWT_SECRET=replace_with_strong_secret
 JWT_EXPIRES_IN=7d
 ```
 
-3. Start dev server:
+3. Start backend (API):
 
 ```bash
-npm run dev
+npm run dev:back
 ```
 
-4. Production start:
+4. Start frontend (static pages) in a second terminal:
 
 ```bash
-npm start
+npm run dev:front
 ```
 
-Open app in browser: `http://localhost:3000`
+For non-watch mode use:
+
+```bash
+npm run start:back
+npm run start:front
+```
+
+Open frontend in browser: `http://localhost:5173`
+Open backend health check: `http://localhost:3000/health`
+
+`npm run dev` and `npm start` still run backend for compatibility.
+
+## Frontend -> backend URL
+
+Frontend pages use `public/app-config.js`:
+
+- Local default API base: `http://localhost:3000`
+- Non-local default API base: current origin
+
+If your backend uses another URL/port, set it from browser console once:
+
+```js
+localStorage.setItem("apiBase", "http://localhost:4000");
+```
 
 ## Auth and RBAC rules
 
-- Roles: `user`, `admin`
-- `user` can update/delete only own posts/comments
-- `admin` can update/delete any post/comment
+- Roles: `user`, `moderator`, `admin`
+- Permission checks are centralized in `src/rbac/permissions.js` and applied in routes/middleware
+- `user`: own posts (read/update/delete), comments (create/delete own), profile (read/update self)
+- `moderator`: everything from `user` + can read any post and delete any comment
+- `admin`: full access, including category creation and user role management
 - `GET /posts/public` is public and returns only published posts
 - `GET /posts` returns only posts created by authenticated user
-- `GET /posts/:id/comments` is public for published posts (or private with token for drafts)
+- `GET /posts/:id/comments` is public for published posts (or available for own/any-post permissions on drafts)
+
+### Bootstrap first admin
+
+After registering a user, promote it to admin once from CLI:
+
+```bash
+npm run rbac:promote -- <email> admin
+```
+
+You can also set another role:
+
+```bash
+npm run rbac:promote -- <email> moderator
+```
 
 ## API endpoints
 
@@ -120,18 +169,20 @@ Open app in browser: `http://localhost:3000`
 | POST | `/auth/register` | No | `username,email,password` | Created user |
 | POST | `/auth/login` | No | `email,password` | JWT token + user |
 | GET | `/categories` | No | - | Category list |
-| POST | `/categories` | Bearer (`admin`) | `name,slug?` | Created category |
+| POST | `/categories` | Bearer + permission `category:create` (`admin`) | `name,slug?` | Created category |
 | GET | `/users/profile` | Bearer | - | Current user profile |
 | PUT | `/users/profile` | Bearer | `username? email?` | Updated profile |
+| GET | `/users` | Bearer + permission `user:read:any` (`admin`) | - | Users list |
+| PATCH | `/users/:id/role` | Bearer + permission `user:role:update:any` (`admin`) | `role` | Updated user role |
 | GET | `/posts/public` | No | - | Published posts |
 | POST | `/posts` | Bearer | `title,content,tags?,isPublished?,categoryIds?` | Created post |
 | GET | `/posts` | Bearer | - | Current user posts |
-| GET | `/posts/:id` | Bearer | - | Post by id (owner/admin) |
-| PUT | `/posts/:id` | Bearer | Any updatable post fields | Updated post |
-| DELETE | `/posts/:id` | Bearer | - | `{ message: "Deleted" }` |
+| GET | `/posts/:id` | Bearer | - | Post by id (own or `post:read:any`) |
+| PUT | `/posts/:id` | Bearer | Any updatable post fields | Updated post (own or `post:update:any`) |
+| DELETE | `/posts/:id` | Bearer | - | `{ message: "Deleted" }` (own or `post:delete:any`) |
 | GET | `/posts/:id/comments` | Optional | - | Comments for post |
 | POST | `/posts/:id/comments` | Bearer | `content` | Created comment |
-| DELETE | `/posts/:id/comments/:commentId` | Bearer | - | `{ message: "Deleted" }` |
+| DELETE | `/posts/:id/comments/:commentId` | Bearer | - | `{ message: "Deleted" }` (own or `comment:delete:any`) |
 
 ## Sample requests
 

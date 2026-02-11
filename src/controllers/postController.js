@@ -2,9 +2,54 @@ import { Category } from "../models/Category.js";
 import { Comment } from "../models/Comment.js";
 import { Post } from "../models/Post.js";
 import { PostCategory } from "../models/PostCategory.js";
+import { can, PERMISSIONS } from "../rbac/permissions.js";
 
 function isOwner(user, ownerId) {
   return ownerId.toString() === user._id.toString();
+}
+
+function resolveAuthorId(post) {
+  if (post.author && typeof post.author === "object" && post.author._id) {
+    return post.author._id;
+  }
+
+  return post.author;
+}
+
+function canReadPost(user, post) {
+  if (can(user.role, PERMISSIONS.POST_READ_ANY)) {
+    return true;
+  }
+
+  if (!can(user.role, PERMISSIONS.POST_READ_OWN)) {
+    return false;
+  }
+
+  return isOwner(user, resolveAuthorId(post));
+}
+
+function canUpdatePost(user, post) {
+  if (can(user.role, PERMISSIONS.POST_UPDATE_ANY)) {
+    return true;
+  }
+
+  if (!can(user.role, PERMISSIONS.POST_UPDATE_OWN)) {
+    return false;
+  }
+
+  return isOwner(user, resolveAuthorId(post));
+}
+
+function canDeletePost(user, post) {
+  if (can(user.role, PERMISSIONS.POST_DELETE_ANY)) {
+    return true;
+  }
+
+  if (!can(user.role, PERMISSIONS.POST_DELETE_OWN)) {
+    return false;
+  }
+
+  return isOwner(user, resolveAuthorId(post));
 }
 
 async function resolveCategories(categoryIds) {
@@ -148,7 +193,7 @@ export async function getPostById(req, res, next) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (req.user.role !== "admin" && !isOwner(req.user, post.author._id)) {
+    if (!canReadPost(req.user, post)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -166,7 +211,7 @@ export async function updatePost(req, res, next) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (req.user.role !== "admin" && !isOwner(req.user, post.author)) {
+    if (!canUpdatePost(req.user, post)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -197,7 +242,7 @@ export async function deletePost(req, res, next) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (req.user.role !== "admin" && !isOwner(req.user, post.author)) {
+    if (!canDeletePost(req.user, post)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 

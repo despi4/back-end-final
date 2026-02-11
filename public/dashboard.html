@@ -3,199 +3,625 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
+    <title>Dashboard | Blog API</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
       integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
       crossorigin="anonymous"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="/">Blog API</a>
-      <div class="ml-auto d-flex align-items-center">
-        <a class="btn btn-outline-light btn-sm mr-2" href="/profile.html">Profile</a>
-        <button id="logoutBtn" class="btn btn-danger btn-sm">Logout</button>
+  <body class="app-shell">
+    <nav class="navbar navbar-expand-lg site-nav">
+      <div class="container">
+        <a class="navbar-brand brand-title" href="/">Blog API</a>
+        <div class="ml-auto d-flex align-items-center flex-wrap">
+          <span id="userBadge" class="meta-chip mr-2 mb-1 mb-sm-0">User</span>
+          <a class="btn btn-sm btn-soft mr-2 mb-1 mb-sm-0" href="/profile.html">Profile</a>
+          <button id="logoutBtn" class="btn btn-sm btn-accent mb-1 mb-sm-0" type="button">Logout</button>
+        </div>
       </div>
     </nav>
 
-    <main class="container py-4">
+    <main class="container app-container">
       <div id="alert" class="alert d-none" role="alert"></div>
 
-      <div class="row">
-        <div class="col-lg-5 mb-4">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">Create Post</h5>
-              <form id="postForm">
-                <div class="form-group">
-                  <label for="title">Title</label>
-                  <input id="title" name="title" class="form-control" required minlength="3" />
-                </div>
-                <div class="form-group">
-                  <label for="content">Content</label>
-                  <textarea id="content" name="content" rows="5" class="form-control" required minlength="10"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="tags">Tags (comma separated)</label>
-                  <input id="tags" name="tags" class="form-control" placeholder="nodejs, express" />
-                </div>
-                <div class="form-group form-check">
-                  <input id="isPublished" name="isPublished" type="checkbox" class="form-check-input" />
-                  <label for="isPublished" class="form-check-label">Publish now</label>
-                </div>
-                <button type="submit" class="btn btn-primary">Save Post</button>
-              </form>
+      <section class="row mb-3">
+        <div class="col-md-4 mb-2 fade-up">
+          <div class="stat-card">
+            <p class="stat-label">My posts</p>
+            <p class="stat-value" id="myTotalStat">0</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-2 fade-up stagger-1">
+          <div class="stat-card">
+            <p class="stat-label">Published</p>
+            <p class="stat-value" id="publishedStat">0</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-2 fade-up stagger-2">
+          <div class="stat-card">
+            <p class="stat-label">Public feed</p>
+            <p class="stat-value" id="publicStat">0</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="row">
+        <div class="col-xl-4 mb-4">
+          <div class="glass-card card-body-tight mb-4 fade-up">
+            <p class="eyebrow mb-2">Content Editor</p>
+            <div class="d-flex justify-content-between align-items-start">
+              <h4 id="editorTitle" class="mb-2">Create Post</h4>
+              <button id="cancelEditBtn" class="btn btn-sm btn-soft d-none" type="button">Cancel</button>
             </div>
+            <p class="muted-note mb-3">Draft or publish instantly. Categories are optional.</p>
+            <form id="postForm">
+              <div class="form-group">
+                <label for="title">Title</label>
+                <input id="title" name="title" class="form-control" required minlength="3" maxlength="200" />
+              </div>
+              <div class="form-group">
+                <label for="content">Content</label>
+                <textarea
+                  id="content"
+                  name="content"
+                  rows="5"
+                  class="form-control"
+                  required
+                  minlength="10"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label for="tags">Tags</label>
+                <input id="tags" name="tags" class="form-control" placeholder="nodejs, express, mongodb" />
+              </div>
+              <div class="form-group">
+                <label for="categoryIds">Categories</label>
+                <select id="categoryIds" name="categoryIds" class="form-control" multiple size="4"></select>
+                <small class="muted-note">Use Ctrl/Cmd + click for multi-select.</small>
+              </div>
+              <div class="form-group form-check">
+                <input id="isPublished" name="isPublished" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="isPublished">Publish now</label>
+              </div>
+              <button id="submitPostBtn" type="submit" class="btn btn-brand btn-block">Create Post</button>
+            </form>
+          </div>
+
+          <div class="glass-card card-body-tight mb-4 fade-up stagger-1">
+            <h6 class="mb-2">Quick Category (admin)</h6>
+            <p class="muted-note mb-3">Works only for admin role.</p>
+            <form id="categoryForm">
+              <div class="input-group">
+                <input
+                  id="categoryName"
+                  name="categoryName"
+                  class="form-control"
+                  placeholder="New category name"
+                  maxlength="80"
+                />
+                <div class="input-group-append">
+                  <button id="createCategoryBtn" class="btn btn-soft" type="submit">Add</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="glass-card card-body-tight fade-up stagger-2">
+            <h6 class="mb-2">API Settings</h6>
+            <label for="apiBaseInput">Backend URL</label>
+            <div class="input-group">
+              <input id="apiBaseInput" class="form-control" autocomplete="off" />
+              <div class="input-group-append">
+                <button id="saveApiBaseBtn" class="btn btn-soft" type="button">Apply</button>
+              </div>
+            </div>
+            <small class="muted-note d-block mt-2">Page reloads after update.</small>
           </div>
         </div>
 
-        <div class="col-lg-7">
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5 class="card-title">My Posts</h5>
-              <div id="myPosts" class="list-group"></div>
+        <div class="col-xl-8">
+          <div class="glass-card card-body-tight mb-4 fade-up">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+              <p class="eyebrow mb-2 w-100">Private Feed</p>
+              <h4 class="mb-2 mb-sm-0">My Posts</h4>
+              <input id="myPostsSearch" class="form-control" style="max-width: 260px" placeholder="Search my posts..." />
             </div>
+            <div id="myPosts" class="post-list"></div>
           </div>
 
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">Published Posts (Public)</h5>
-              <div id="publicPosts" class="list-group"></div>
+          <div class="glass-card card-body-tight mb-4 fade-up stagger-1">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+              <p class="eyebrow mb-2 w-100">Public Feed</p>
+              <h4 class="mb-2 mb-sm-0">Published Feed</h4>
+              <input
+                id="publicPostsSearch"
+                class="form-control"
+                style="max-width: 260px"
+                placeholder="Search public posts..."
+              />
             </div>
+            <div id="publicPosts" class="post-list"></div>
+          </div>
+
+          <div id="commentsPanel" class="glass-card card-body-tight d-none fade-up stagger-2">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 id="commentsTitle" class="mb-0">Comments</h4>
+              <button id="closeCommentsBtn" class="btn btn-sm btn-soft" type="button">Close</button>
+            </div>
+            <form id="commentForm" class="mb-3">
+              <div class="input-group">
+                <input
+                  id="commentInput"
+                  name="comment"
+                  class="form-control"
+                  maxlength="2000"
+                  placeholder="Write a comment..."
+                  required
+                />
+                <div class="input-group-append">
+                  <button id="sendCommentBtn" class="btn btn-brand" type="submit">Send</button>
+                </div>
+              </div>
+            </form>
+            <div id="commentsList" class="post-list"></div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
 
+    <script src="/app-config.js"></script>
+    <script src="/app-common.js"></script>
     <script>
-      const token = localStorage.getItem("token");
+      const token = window.AppCommon.getToken();
       if (!token) {
         window.location.href = "/login.html";
       }
 
+      const user = window.AppCommon.getUser() || {};
+      const client = window.AppCommon.createApiClient(token);
+
+      const state = {
+        myPosts: [],
+        publicPosts: [],
+        categories: [],
+        editingPostId: "",
+        commentsPost: null,
+      };
+
       const alertBox = document.getElementById("alert");
-      const postForm = document.getElementById("postForm");
+      const userBadge = document.getElementById("userBadge");
       const myPostsEl = document.getElementById("myPosts");
       const publicPostsEl = document.getElementById("publicPosts");
+      const myPostsSearch = document.getElementById("myPostsSearch");
+      const publicPostsSearch = document.getElementById("publicPostsSearch");
+      const postForm = document.getElementById("postForm");
+      const editorTitle = document.getElementById("editorTitle");
+      const cancelEditBtn = document.getElementById("cancelEditBtn");
+      const submitPostBtn = document.getElementById("submitPostBtn");
+      const categorySelect = document.getElementById("categoryIds");
+      const categoryForm = document.getElementById("categoryForm");
+      const createCategoryBtn = document.getElementById("createCategoryBtn");
+      const apiBaseInput = document.getElementById("apiBaseInput");
+      const commentsPanel = document.getElementById("commentsPanel");
+      const commentsTitle = document.getElementById("commentsTitle");
+      const commentsList = document.getElementById("commentsList");
+      const commentForm = document.getElementById("commentForm");
+      const commentInput = document.getElementById("commentInput");
+      const sendCommentBtn = document.getElementById("sendCommentBtn");
+
+      userBadge.textContent = user.username ? `${user.username} (${user.role || "user"})` : "Authorized";
+      apiBaseInput.value = window.APP_CONFIG.apiBase;
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        window.AppCommon.clearAuth();
         window.location.href = "/login.html";
       });
 
-      function showMessage(message, type = "danger") {
-        alertBox.className = `alert alert-${type}`;
-        alertBox.textContent = message;
-      }
+      document.getElementById("saveApiBaseBtn").addEventListener("click", () => {
+        const value = apiBaseInput.value.trim().replace(/\/+$/, "");
+        if (value) {
+          window.localStorage.setItem("apiBase", value);
+        } else {
+          window.localStorage.removeItem("apiBase");
+        }
+        window.location.reload();
+      });
 
-      async function api(path, options = {}) {
-        const response = await fetch(path, {
-          ...options,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            ...(options.headers || {}),
-          },
-        });
+      document.getElementById("closeCommentsBtn").addEventListener("click", () => {
+        state.commentsPost = null;
+        commentsPanel.classList.add("d-none");
+      });
 
-        const data = await response.json().catch(() => ({}));
+      myPostsSearch.addEventListener("input", renderMyPosts);
+      publicPostsSearch.addEventListener("input", renderPublicPosts);
 
-        if (!response.ok) {
-          throw new Error(data.message || "Request failed");
+      function postMatchesQuery(post, query) {
+        const q = String(query || "").trim().toLowerCase();
+        if (!q) {
+          return true;
         }
 
-        return data;
+        const tags = Array.isArray(post.tags) ? post.tags.join(" ") : "";
+        const cats = Array.isArray(post.categories) ? post.categories.map((item) => item.name).join(" ") : "";
+        const text = `${post.title || ""} ${post.content || ""} ${tags} ${cats}`.toLowerCase();
+        return text.includes(q);
       }
 
-      function renderPostItem(post, canDelete = false) {
-        const item = document.createElement("div");
-        item.className = "list-group-item";
-
-        const tags = (post.tags || []).map((tag) => `#${tag}`).join(" ");
-        item.innerHTML = `
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <h6 class="mb-1">${post.title}</h6>
-              <p class="mb-1 text-muted">${post.content.slice(0, 140)}</p>
-              <small class="text-secondary">${tags || "No tags"} | ${post.isPublished ? "Published" : "Draft"}</small>
-            </div>
-            ${canDelete ? '<button class="btn btn-sm btn-outline-danger">Delete</button>' : ""}
-          </div>
-        `;
-
-        if (canDelete) {
-          const btn = item.querySelector("button");
-          btn.addEventListener("click", async () => {
-            try {
-              await api(`/posts/${post._id}`, { method: "DELETE" });
-              showMessage("Post deleted", "success");
-              await loadData();
-            } catch (error) {
-              showMessage(error.message, "danger");
-            }
-          });
+      function renderCategories() {
+        categorySelect.innerHTML = "";
+        if (!state.categories.length) {
+          const option = document.createElement("option");
+          option.disabled = true;
+          option.textContent = "No categories yet";
+          categorySelect.appendChild(option);
+          return;
         }
 
-        return item;
+        for (const category of state.categories) {
+          const option = document.createElement("option");
+          option.value = category._id;
+          option.textContent = `${category.name}${category.slug ? ` (${category.slug})` : ""}`;
+          categorySelect.appendChild(option);
+        }
       }
 
-      async function loadData() {
+      function renderStats() {
+        const myPosts = state.myPosts.length;
+        const published = state.myPosts.filter((post) => post.isPublished).length;
+        const publicTotal = state.publicPosts.length;
+
+        document.getElementById("myTotalStat").textContent = String(myPosts);
+        document.getElementById("publishedStat").textContent = String(published);
+        document.getElementById("publicStat").textContent = String(publicTotal);
+      }
+
+      function renderPills(container, values, cssClass, emptyLabel) {
+        if (!Array.isArray(values) || !values.length) {
+          const pill = document.createElement("span");
+          pill.className = cssClass;
+          pill.textContent = emptyLabel;
+          container.appendChild(pill);
+          return;
+        }
+
+        for (const value of values) {
+          const pill = document.createElement("span");
+          pill.className = cssClass;
+          pill.textContent = value;
+          container.appendChild(pill);
+        }
+      }
+
+      function createPostCard(post, isMine) {
+        const card = document.createElement("article");
+        card.className = "post-card";
+
+        const head = document.createElement("div");
+        head.className = "post-head";
+
+        const left = document.createElement("div");
+        const title = document.createElement("h6");
+        title.className = "post-title";
+        title.textContent = post.title || "Untitled";
+
+        const meta = document.createElement("p");
+        meta.className = "post-meta mb-1";
+        const author = post.author && post.author.username ? post.author.username : user.username || "author";
+        meta.textContent = `${post.isPublished ? "Published" : "Draft"} • by ${author} • ${window.AppCommon.formatDate(
+          post.createdAt
+        )}`;
+
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "d-flex";
+
+        if (isMine) {
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn btn-sm btn-soft mr-2";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", () => startEdit(post));
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "btn btn-sm btn-outline-danger";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", () => deletePost(post));
+
+          right.appendChild(editBtn);
+          right.appendChild(deleteBtn);
+        } else {
+          const commentsBtn = document.createElement("button");
+          commentsBtn.type = "button";
+          commentsBtn.className = "btn btn-sm btn-soft";
+          commentsBtn.textContent = "Comments";
+          commentsBtn.addEventListener("click", () => openComments(post));
+          right.appendChild(commentsBtn);
+        }
+
+        head.appendChild(left);
+        head.appendChild(right);
+        card.appendChild(head);
+
+        const content = document.createElement("p");
+        content.className = "post-body";
+        content.textContent = window.AppCommon.shortText(post.content, 200);
+        card.appendChild(content);
+
+        const tagsWrap = document.createElement("div");
+        renderPills(tagsWrap, (post.tags || []).map((tag) => `#${tag}`), "pill-tag", "No tags");
+        card.appendChild(tagsWrap);
+
+        const categoryWrap = document.createElement("div");
+        const categoryNames = (post.categories || []).map((category) => category.name);
+        renderPills(categoryWrap, categoryNames, "pill-category", "No categories");
+        card.appendChild(categoryWrap);
+
+        return card;
+      }
+
+      function renderMyPosts() {
+        myPostsEl.innerHTML = "";
+        const filtered = state.myPosts.filter((post) => postMatchesQuery(post, myPostsSearch.value));
+
+        if (!filtered.length) {
+          myPostsEl.innerHTML = '<div class="placeholder-block">No posts found.</div>';
+          return;
+        }
+
+        for (const post of filtered) {
+          myPostsEl.appendChild(createPostCard(post, true));
+        }
+      }
+
+      function renderPublicPosts() {
+        publicPostsEl.innerHTML = "";
+        const filtered = state.publicPosts.filter((post) => postMatchesQuery(post, publicPostsSearch.value));
+
+        if (!filtered.length) {
+          publicPostsEl.innerHTML = '<div class="placeholder-block">No public posts found.</div>';
+          return;
+        }
+
+        for (const post of filtered) {
+          publicPostsEl.appendChild(createPostCard(post, false));
+        }
+      }
+
+      function resetEditor() {
+        state.editingPostId = "";
+        postForm.reset();
+        window.AppCommon.setSelectValues(categorySelect, []);
+        editorTitle.textContent = "Create Post";
+        cancelEditBtn.classList.add("d-none");
+        submitPostBtn.textContent = "Create Post";
+      }
+
+      function startEdit(post) {
+        state.editingPostId = post._id;
+        editorTitle.textContent = "Edit Post";
+        cancelEditBtn.classList.remove("d-none");
+        submitPostBtn.textContent = "Save Changes";
+
+        postForm.title.value = post.title || "";
+        postForm.content.value = post.content || "";
+        postForm.tags.value = window.AppCommon.arrayToCsv(post.tags || []);
+        postForm.isPublished.checked = Boolean(post.isPublished);
+        window.AppCommon.setSelectValues(
+          categorySelect,
+          (post.categories || []).map((category) => category.id || category._id)
+        );
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      async function deletePost(post) {
+        const confirmed = window.confirm(`Delete post "${post.title}"?`);
+        if (!confirmed) {
+          return;
+        }
+
         try {
-          myPostsEl.innerHTML = "";
-          publicPostsEl.innerHTML = "";
+          await client.request(`/posts/${post._id}`, { method: "DELETE", auth: "required" });
+          window.AppCommon.showAlert(alertBox, "Post deleted", "success", 3000);
+          if (state.editingPostId === post._id) {
+            resetEditor();
+          }
+          await refreshPosts();
+        } catch (error) {
+          window.AppCommon.showAlert(alertBox, error.message || "Delete failed", "danger");
+        }
+      }
 
-          const [myPosts, publicPosts] = await Promise.all([
-            api("/posts"),
-            fetch("/posts/public").then((response) => response.json()),
-          ]);
+      async function refreshCategories() {
+        state.categories = await client.request("/categories", { auth: "none" });
+        renderCategories();
+      }
 
-          if (!Array.isArray(myPosts) || myPosts.length === 0) {
-            myPostsEl.innerHTML = '<div class="list-group-item text-muted">No posts yet.</div>';
-          } else {
-            myPosts.forEach((post) => myPostsEl.appendChild(renderPostItem(post, true)));
+      async function refreshPosts() {
+        const [myPosts, publicPosts] = await Promise.all([
+          client.request("/posts", { auth: "required" }),
+          client.request("/posts/public", { auth: "none" }),
+        ]);
+
+        state.myPosts = Array.isArray(myPosts) ? myPosts : [];
+        state.publicPosts = Array.isArray(publicPosts) ? publicPosts : [];
+
+        renderStats();
+        renderMyPosts();
+        renderPublicPosts();
+      }
+
+      async function openComments(post) {
+        state.commentsPost = post;
+        commentsTitle.textContent = `Comments: ${post.title}`;
+        commentsPanel.classList.remove("d-none");
+        await loadComments();
+      }
+
+      async function loadComments() {
+        commentsList.innerHTML = "";
+        if (!state.commentsPost) {
+          return;
+        }
+
+        try {
+          const comments = await client.request(`/posts/${state.commentsPost._id}/comments`, { auth: "optional" });
+
+          if (!Array.isArray(comments) || comments.length === 0) {
+            commentsList.innerHTML = '<div class="placeholder-block">No comments yet.</div>';
+            return;
           }
 
-          if (!Array.isArray(publicPosts) || publicPosts.length === 0) {
-            publicPostsEl.innerHTML = '<div class="list-group-item text-muted">No public posts.</div>';
-          } else {
-            publicPosts.forEach((post) => publicPostsEl.appendChild(renderPostItem(post, false)));
+          for (const comment of comments) {
+            const item = document.createElement("article");
+            item.className = "post-card";
+
+            const author = comment.author && comment.author.username ? comment.author.username : "Unknown";
+
+            const head = document.createElement("div");
+            head.className = "post-head";
+
+            const strong = document.createElement("strong");
+            strong.textContent = author;
+
+            const createdAt = document.createElement("small");
+            createdAt.className = "post-meta";
+            createdAt.textContent = window.AppCommon.formatDate(comment.createdAt);
+
+            head.appendChild(strong);
+            head.appendChild(createdAt);
+            item.appendChild(head);
+
+            const body = document.createElement("p");
+            body.className = "post-body mb-0";
+            body.textContent = window.AppCommon.shortText(comment.content, 500);
+            item.appendChild(body);
+            commentsList.appendChild(item);
           }
         } catch (error) {
-          showMessage(error.message, "danger");
+          window.AppCommon.showAlert(alertBox, error.message || "Failed to load comments", "danger");
         }
       }
+
+      cancelEditBtn.addEventListener("click", resetEditor);
 
       postForm.addEventListener("submit", async (event) => {
         event.preventDefault();
+        window.AppCommon.setButtonBusy(
+          submitPostBtn,
+          true,
+          state.editingPostId ? "Save Changes" : "Create Post",
+          state.editingPostId ? "Saving..." : "Creating..."
+        );
 
         const payload = {
           title: postForm.title.value.trim(),
           content: postForm.content.value.trim(),
-          tags: postForm.tags.value
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
+          tags: window.AppCommon.csvToArray(postForm.tags.value),
           isPublished: postForm.isPublished.checked,
+          categoryIds: window.AppCommon.getSelectValues(categorySelect),
         };
 
         try {
-          await api("/posts", {
-            method: "POST",
-            body: JSON.stringify(payload),
-          });
-
-          postForm.reset();
-          showMessage("Post created", "success");
-          await loadData();
+          const path = state.editingPostId ? `/posts/${state.editingPostId}` : "/posts";
+          const method = state.editingPostId ? "PUT" : "POST";
+          await client.request(path, { method, body: payload, auth: "required" });
+          window.AppCommon.showAlert(
+            alertBox,
+            state.editingPostId ? "Post updated successfully" : "Post created successfully",
+            "success",
+            3200
+          );
+          resetEditor();
+          await refreshPosts();
         } catch (error) {
-          showMessage(error.message, "danger");
+          window.AppCommon.showAlert(alertBox, error.message || "Failed to save post", "danger");
+        } finally {
+          window.AppCommon.setButtonBusy(
+            submitPostBtn,
+            false,
+            state.editingPostId ? "Save Changes" : "Create Post"
+          );
         }
       });
 
-      loadData();
+      categoryForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const categoryName = categoryForm.categoryName.value.trim();
+        if (!categoryName) {
+          return;
+        }
+
+        window.AppCommon.setButtonBusy(createCategoryBtn, true, "Add", "Adding...");
+        try {
+          await client.request("/categories", {
+            method: "POST",
+            auth: "required",
+            body: { name: categoryName },
+          });
+          categoryForm.reset();
+          window.AppCommon.showAlert(alertBox, "Category created", "success", 2500);
+          await refreshCategories();
+        } catch (error) {
+          if (error.status === 403) {
+            window.AppCommon.showAlert(alertBox, "Only admin can create categories", "warning");
+          } else {
+            window.AppCommon.showAlert(alertBox, error.message || "Category creation failed", "danger");
+          }
+        } finally {
+          window.AppCommon.setButtonBusy(createCategoryBtn, false, "Add");
+        }
+      });
+
+      commentForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!state.commentsPost) {
+          return;
+        }
+
+        const content = commentInput.value.trim();
+        if (!content) {
+          return;
+        }
+
+        window.AppCommon.setButtonBusy(sendCommentBtn, true, "Send", "Sending...");
+        try {
+          await client.request(`/posts/${state.commentsPost._id}/comments`, {
+            method: "POST",
+            auth: "required",
+            body: { content },
+          });
+          commentInput.value = "";
+          window.AppCommon.showAlert(alertBox, "Comment added", "success", 2200);
+          await loadComments();
+        } catch (error) {
+          window.AppCommon.showAlert(alertBox, error.message || "Comment failed", "danger");
+        } finally {
+          window.AppCommon.setButtonBusy(sendCommentBtn, false, "Send");
+        }
+      });
+
+      async function init() {
+        try {
+          await Promise.all([refreshCategories(), refreshPosts()]);
+        } catch (error) {
+          window.AppCommon.showAlert(alertBox, error.message || "Failed to load dashboard", "danger");
+        }
+      }
+
+      init();
     </script>
   </body>
 </html>

@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import { ENV } from "../config/env.js";
 import { User } from "../models/User.js";
+import { ROLES } from "../rbac/roles.js";
 
 function createToken(userId) {
   return jwt.sign({ userId }, ENV.JWT_SECRET, {
@@ -24,7 +25,7 @@ export async function register(req, res, next) {
       username,
       email,
       passwordHash,
-      role: "user",
+      role: ROLES.USER,
     });
 
     return res.status(201).json({

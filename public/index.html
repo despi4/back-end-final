@@ -3,45 +3,141 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blog API - Home</title>
+    <title>Blog API Workspace</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
       integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
       crossorigin="anonymous"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="/">Blog API</a>
-      <div class="ml-auto">
-        <a class="btn btn-outline-light btn-sm mr-2" href="/login.html">Login</a>
-        <a class="btn btn-primary btn-sm" href="/register.html">Register</a>
+  <body class="app-shell">
+    <nav class="navbar navbar-expand-lg site-nav">
+      <div class="container">
+        <a class="navbar-brand brand-title" href="/">Blog API</a>
+        <div class="ml-auto d-flex align-items-center">
+          <a class="btn btn-sm btn-soft mr-2" href="/login.html">Login</a>
+          <a class="btn btn-sm btn-brand mr-2" href="/register.html">Register</a>
+          <a class="btn btn-sm btn-outline-light d-none" id="dashboardBtn" href="/dashboard.html">Dashboard</a>
+        </div>
       </div>
     </nav>
 
-    <main class="container py-5">
-      <div class="jumbotron">
-        <h1 class="display-4">Node + Express Blog</h1>
-        <p class="lead">
-          JWT authentication, RBAC, MongoDB collections, validation and Bootstrap pages.
-        </p>
-        <hr class="my-4" />
-        <p>Use this UI for quick manual checks of register/login/profile/posts APIs.</p>
-        <a class="btn btn-primary btn-lg mr-2" href="/register.html">Create Account</a>
-        <a class="btn btn-outline-secondary btn-lg" href="/dashboard.html">Open Dashboard</a>
-      </div>
-
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">API Base</h5>
-          <p class="card-text mb-0"><code id="api-base"></code></p>
+    <main class="container app-container">
+      <section class="glass-card card-body-tight fade-up">
+        <div class="row align-items-center">
+          <div class="col-lg-7 mb-4 mb-lg-0">
+            <p class="eyebrow mb-2">Backend Studio</p>
+            <h1 class="hero-title mb-3">Control center for your blog backend</h1>
+            <p class="hero-lead mb-4">
+              Launch, test and manage auth, posts, categories and comments from one clean interface.
+              API health and base URL are visible right away.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-brand" href="/register.html">Create account</a>
+              <a class="btn btn-accent" href="/dashboard.html">Open dashboard</a>
+              <a class="btn btn-soft" href="/login.html">Login</a>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="glass-card card-body-tight">
+              <p class="eyebrow mb-2">System Status</p>
+              <h5 class="mb-3">API status</h5>
+              <div class="d-flex align-items-center mb-3">
+                <span class="meta-chip mr-2" id="healthChip">Checking...</span>
+                <small class="text-muted">Health endpoint: <code>/health</code></small>
+              </div>
+              <p class="mb-2"><strong>Current API base</strong></p>
+              <code id="api-base" class="d-block mb-3"></code>
+              <label class="mb-1" for="apiBaseInput">Change API URL</label>
+              <div class="input-group">
+                <input
+                  id="apiBaseInput"
+                  class="form-control"
+                  placeholder="http://localhost:3000"
+                  autocomplete="off"
+                />
+                <div class="input-group-append">
+                  <button id="saveApiBaseBtn" class="btn btn-brand" type="button">Apply</button>
+                </div>
+              </div>
+              <small class="muted-note d-block mt-2">Leave empty to use default for current host.</small>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section class="row mt-4">
+        <div class="col-md-4 mb-3 fade-up stagger-1">
+          <div class="glass-card card-body-tight h-100">
+            <h6 class="mb-2">JWT Auth</h6>
+            <p class="mb-0 muted-note">Register, login and test protected routes with token-based access.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3 fade-up stagger-2">
+          <div class="glass-card card-body-tight h-100">
+            <h6 class="mb-2">Content Workflow</h6>
+            <p class="mb-0 muted-note">Create drafts, publish posts, attach categories and moderate comments.</p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3 fade-up stagger-3">
+          <div class="glass-card card-body-tight h-100">
+            <h6 class="mb-2">Role-aware Actions</h6>
+            <p class="mb-0 muted-note">Keep user/admin behavior predictable while checking permissions.</p>
+          </div>
+        </div>
+      </section>
     </main>
 
+    <script src="/app-config.js"></script>
+    <script src="/app-common.js"></script>
     <script>
-      document.getElementById("api-base").textContent = window.location.origin;
+      const apiBaseEl = document.getElementById("api-base");
+      const healthChip = document.getElementById("healthChip");
+      const apiBaseInput = document.getElementById("apiBaseInput");
+      const saveApiBaseBtn = document.getElementById("saveApiBaseBtn");
+      const dashboardBtn = document.getElementById("dashboardBtn");
+
+      apiBaseEl.textContent = window.APP_CONFIG.apiBase;
+      apiBaseInput.value = window.APP_CONFIG.apiBase;
+
+      if (window.AppCommon.getToken()) {
+        dashboardBtn.classList.remove("d-none");
+      }
+
+      async function checkHealth() {
+        try {
+          const response = await fetch(window.apiUrl("/health"));
+          const data = await response.json();
+          if (!response.ok || data.status !== "ok") {
+            throw new Error("Health check failed");
+          }
+          healthChip.className = "meta-chip";
+          healthChip.textContent = "Online";
+        } catch (error) {
+          healthChip.className = "meta-chip warn";
+          healthChip.textContent = "Unavailable";
+        }
+      }
+
+      saveApiBaseBtn.addEventListener("click", () => {
+        const value = apiBaseInput.value.trim().replace(/\/+$/, "");
+        if (value) {
+          window.localStorage.setItem("apiBase", value);
+        } else {
+          window.localStorage.removeItem("apiBase");
+        }
+        window.location.reload();
+      });
+
+      checkHealth();
     </script>
   </body>
 </html>
